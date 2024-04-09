@@ -4,14 +4,14 @@
 seeds = false
 skip-lint = false
 
-[programs.localnet]
-pump = "C2Bj5sizbDg41KzZj1EnCrC3Dg8yCmZVvazQJzWDY8U8"
+[programs.devnet]
+pump= "DJMMfpsEPB6JSpzakCK9CqBtAjzRhFx7AYNUAqVktmUE"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "Localnet"
+cluster = "Devnet"
 wallet = "/Users/siddi_404/.config/solana/id.json"
 
 [scripts]

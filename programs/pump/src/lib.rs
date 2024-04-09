@@ -1,15 +1,16 @@
 use anchor_lang::prelude::*;
-
-declare_id!("C2Bj5sizbDg41KzZj1EnCrC3Dg8yCmZVvazQJzWDY8U8");
+use instructions::*;
+pub mod instructions;
+declare_id!("DJMMfpsEPB6JSpzakCK9CqBtAjzRhFx7AYNUAqVktmUE");
 
 #[program]
 pub mod pump {
     use super::*;
 
-    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
-        Ok(())
+    pub fn create_token(
+        ctx: Context<CreateToken>,
+        metadata:InitTokenParams
+    ) -> Result<()> {
+        create::create_token(ctx,metadata)
     }
 }
-
-#[derive(Accounts)]
-pub struct Initialize {}
