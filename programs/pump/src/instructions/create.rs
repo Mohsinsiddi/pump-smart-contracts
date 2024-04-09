@@ -3,7 +3,7 @@
 use {
     anchor_lang::prelude::*,
     anchor_spl::{
-        metadata::{create_metadata_accounts_v3, mpl_token_metadata::{types::DataV2,accounts::Metadata}, CreateMetadataAccountsV3},
+        metadata::{create_metadata_accounts_v3, mpl_token_metadata::types::DataV2, CreateMetadataAccountsV3},
         token::{Mint, Token},
     },
 };

@@ -6,5 +6,5 @@ pub const MAX_WOOD_PER_TREE: u64 = 100000;
 pub const INITIAL_PRICE: u64 = 1000000;
 pub const PRICE_SLOPE: u64 = 1000000;
 pub const DECIMAL: u64 = 1000;
-pub const SCALE: u64 = 1000000;
+pub const SCALE: u64 = 10000000;
 
