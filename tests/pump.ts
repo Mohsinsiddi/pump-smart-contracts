@@ -47,6 +47,9 @@ describe("pump", () => {
     decimals: 6,
   };
 
+  const isMintAuthUpdated = true;
+  const isFreeAuthRevoked = true;
+
   it("Create an SPL Token!", async () => {
     const tokenMinted = true;
     if (!tokenMinted) {
@@ -82,53 +85,76 @@ describe("pump", () => {
   });
 
   it("Mint some tokens to your wallet!", async () => {
-    // Derive the associated token address account for the mint and payer.
-    const associatedTokenAccountAddress = getAssociatedTokenAddressSync(
-      mint,
-      payer.payer.publicKey
-    );
+    if (!isMintAuthUpdated) {
+      // Derive the associated token address account for the mint and payer.
+      const associatedTokenAccountAddress = getAssociatedTokenAddressSync(
+        mint,
+        payer.payer.publicKey
+      );
 
-    // Amount of tokens to mint.
-    const sol_amount = new anchor.BN(1000000000);
+      // Amount of tokens to mint.
+      const sol_amount = new anchor.BN(1000000000);
 
-    // Mint the tokens to the associated token account.
-    const transactionSignature = await program.methods
-      .buyTokens(sol_amount)
-      .accounts({
-        payer: payer.payer.publicKey,
-        mintAccount: mint,
-        associatedTokenAccount: associatedTokenAccountAddress,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-        systemProgram: SystemProgram.programId,
-        recipient: recipient,
-      })
-      .rpc({ skipPreflight: false });
+      // Mint the tokens to the associated token account.
+      const transactionSignature = await program.methods
+        .buyTokens(sol_amount)
+        .accounts({
+          payer: payer.payer.publicKey,
+          mintAccount: mint,
+          associatedTokenAccount: associatedTokenAccountAddress,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+          recipient: recipient,
+        })
+        .rpc({ skipPreflight: false });
 
-    console.log("Success!");
-    console.log(
-      `   Associated Token Account Address: ${associatedTokenAccountAddress}`
-    );
-    console.log(`   Transaction Signature: ${transactionSignature}`);
+      console.log("Success!");
+      console.log(
+        `   Associated Token Account Address: ${associatedTokenAccountAddress}`
+      );
+      console.log(`   Transaction Signature: ${transactionSignature}`);
+    }
   });
 
-  it("Update Mint Authority", async () => {
-    // Mint the tokens to the associated token account.
-    const transactionSignature = await program.methods
-      .transferMintAuth()
-      .accounts({
-        payer: payer.payer.publicKey,
-        mintAccount: mint,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-        systemProgram: SystemProgram.programId,
-        newMintAuth: new PublicKey(
-          "devjbkEUcKtEfw3h8nzScA4eS1tyWejcpTzNJmr46Xa"
-        ),
-      })
-      .rpc({ skipPreflight: false });
+  it("Update Mint Authority of Token", async () => {
+    if (!isMintAuthUpdated) {
+      // Mint the tokens to the associated token account.
+      const transactionSignature = await program.methods
+        .transferMintAuth()
+        .accounts({
+          payer: payer.payer.publicKey,
+          mintAccount: mint,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+          newMintAuth: new PublicKey(
+            "devjbkEUcKtEfw3h8nzScA4eS1tyWejcpTzNJmr46Xa"
+          ),
+        })
+        .rpc({ skipPreflight: false });
 
-    console.log("Success!");
-    console.log(`   Transaction Signature: ${transactionSignature}`);
+      console.log("Success!");
+      console.log(`   Transaction Signature: ${transactionSignature}`);
+    }
+  });
+
+  it("Revoke Freeze Authority of Token", async () => {
+    if (!isFreeAuthRevoked) {
+      // Mint the tokens to the associated token account.
+      const transactionSignature = await program.methods
+        .revokeFreezeAuth()
+        .accounts({
+          payer: payer.payer.publicKey,
+          mintAccount: mint,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc({ skipPreflight: false });
+
+      console.log("Success!");
+      console.log(`   Transaction Signature: ${transactionSignature}`);
+    }
   });
 });

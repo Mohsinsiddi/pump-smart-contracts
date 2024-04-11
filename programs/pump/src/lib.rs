@@ -23,4 +23,8 @@ pub mod pump {
     pub fn transfer_mint_auth(ctx:Context<TransferMintAuth>)-> Result<()> {
        transfer_mint_auth::transfer_mint_auth(ctx)
     }
+
+    pub fn revoke_freeze_auth(ctx:Context<RevokeFreezeAuth>)-> Result<()> {
+        revoke_freeze_auth::revoke_freeze_auth(ctx)
+    }
 }
