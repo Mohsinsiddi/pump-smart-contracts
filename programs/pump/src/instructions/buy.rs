@@ -1,5 +1,5 @@
 use {
-    crate::constants::{DECIMAL, INITIAL_PRICE, SCALE}, anchor_lang::prelude::*, anchor_spl::{
+    crate::{constants::{INITIAL_PRICE, PRICE_SLOPE, SCALE}, errors::ProgramErrorCode}, anchor_lang::prelude::*, anchor_spl::{
         associated_token::AssociatedToken,
         token::{mint_to, Mint, MintTo, Token, TokenAccount,},
     }
@@ -8,7 +8,7 @@ use solana_program::system_instruction;
 
 
 #[derive(Accounts)]
-pub struct MintToken<'info> {
+pub struct BuyTokens<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
@@ -19,7 +19,7 @@ pub struct MintToken<'info> {
     // Mint account address is a PDA
     #[account(
         mut,
-        seeds = [b"mint"],
+        seeds = [b"mi"],
         bump
     )]
     pub mint_account: Account<'info, Mint>,
@@ -39,27 +39,16 @@ pub struct MintToken<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn mint_token(ctx: Context<MintToken>, amount: u64) -> Result<()> {
-    msg!("Minting token to associated token account...");
-    msg!("Mint: {}", &ctx.accounts.mint_account.key());
-    msg!(
-        "Token Address: {}",
-        &ctx.accounts.associated_token_account.key()
-    );
+pub fn buy_tokens(ctx: Context<BuyTokens>, sol_amount: u64) -> Result<()> {
 
-
-    msg!("Solana Amount: {}",amount);
-
-    let _token_amount = how_many_token_sol_can_buy(ctx.accounts.mint_account.supply,amount);
-    msg!("Token _token_amount Bought with SOL: {}",_token_amount);
-    let _amount = token_to_solbuy(ctx.accounts.mint_account.supply,_token_amount);
+    let tokens_bought = calculate_tokens_bought(ctx.accounts.mint_account.supply , sol_amount);
+    msg!("Tokens bought with {} SOL: {}", sol_amount, tokens_bought);
    
-    msg!("With SOL Token Bought: {}",_amount);
     let from_account = &ctx.accounts.payer;
         let to_account = &ctx.accounts.recipient;
 
     // Create the transfer instruction
-    let transfer_instruction = system_instruction::transfer(from_account.key, to_account.key, amount);
+    let transfer_instruction = system_instruction::transfer(from_account.key, to_account.key, sol_amount);
 
     // Invoke the transfer instruction
     anchor_lang::solana_program::program::invoke_signed(
@@ -74,7 +63,7 @@ pub fn mint_token(ctx: Context<MintToken>, amount: u64) -> Result<()> {
 
 
     // PDA signer seeds
-    let seeds = b"mint";
+    let seeds = b"mi";
     let bump = ctx.bumps.mint_account;
     let signer_seeds: &[&[&[u8]]] = &[&[seeds, &[bump]]];
 
@@ -89,7 +78,7 @@ pub fn mint_token(ctx: Context<MintToken>, amount: u64) -> Result<()> {
             },
         )
         .with_signer(signer_seeds), // using PDA to sign
-        amount * 10u64.pow(ctx.accounts.mint_account.decimals as u32), // Mint tokens, adjust for decimals
+        tokens_bought * 10u64.pow(ctx.accounts.mint_account.decimals as u32), // Mint tokens, adjust for decimals
     )?;
 
     msg!("Token minted successfully.");
@@ -97,36 +86,25 @@ pub fn mint_token(ctx: Context<MintToken>, amount: u64) -> Result<()> {
     Ok(())
 }
 
- fn token_to_solbuy( current_token_supply_in_wei:u64,new_token_amount_to_buy:u64) -> u64 {
-        let _token_supply_in_ether = current_token_supply_in_wei / SCALE;
-
-        let _a = (new_token_amount_to_buy * DECIMAL) / 2;
-        let _b = 2 * _token_supply_in_ether;
-        let _c = new_token_amount_to_buy + 1;
-
-        return ((_a * (_b + _c)) / DECIMAL) * SCALE;
+// Function to calculate the price of tokens based on the current token supply
+fn calculate_token_price(current_supply: u64) -> u64 {
+    // Convert INITIAL_PRICE to u128 before multiplication to avoid overflow
+    let initial_price = INITIAL_PRICE as u128;
+    // Multiply by SCALE before division to maintain precision
+    let price_slope_scaled = (current_supply as u128 * PRICE_SLOPE as u128) / SCALE;
+    ((initial_price * SCALE as u128) + price_slope_scaled) as u64
 }
 
-fn how_many_token_sol_can_buy(current_supply_in_lamports: u64, deposited_sol_amount: u64) -> u64 {
-    let mut left = 0;
-    let mut right = deposited_sol_amount / INITIAL_PRICE; // Initial upper bound estimation
-    
-    while left <= right {
-        let mid = left + (right - left) / 2;
-        let cost = token_to_solbuy(current_supply_in_lamports, mid);
-        
-        if cost == deposited_sol_amount {
-            return mid;
-        } else if cost < deposited_sol_amount {
-            left = mid + 1;
-        } else {
-            right = mid - 1;
-        }
-    }
-    
-    // Adjust the result to handle the scenario where the exact amount cannot be matched
-    if token_to_solbuy(current_supply_in_lamports, right) > deposited_sol_amount {
-        return right - 1;
-    }
-    return right;
+// Function to calculate SOL needed to buy x amount of tokens
+fn calculate_sol_needed(current_supply: u64, desired_token_amount: u64) -> u64 {
+    let token_price = calculate_token_price(current_supply);
+    // Multiply by SCALE before division to maintain precision
+    (desired_token_amount as u128 * token_price as u128 / SCALE) as u64
+}
+
+// Function to calculate tokens bought with x amount of SOL
+fn calculate_tokens_bought(current_supply: u64, sol_sent: u64) -> u64 {
+    let token_price = calculate_token_price(current_supply);
+    // Multiply by SCALE before division to maintain precision
+    (sol_sent as u128 * SCALE / token_price as u128) as u64
 }

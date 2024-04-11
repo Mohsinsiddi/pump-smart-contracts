@@ -16,7 +16,11 @@ pub mod pump {
         create::create_token(ctx,metadata)
     }
 
-    pub fn mint_token(ctx: Context<MintToken>, amount: u64) -> Result<()> {
-        buy::mint_token(ctx, amount)
+    pub fn buy_tokens(ctx: Context<BuyTokens>, sol_amount: u64) -> Result<()> {
+        buy::buy_tokens(ctx, sol_amount)
+    }
+
+    pub fn transfer_mint_auth(ctx:Context<TransferMintAuth>)-> Result<()> {
+       transfer_mint_auth::transfer_mint_auth(ctx)
     }
 }

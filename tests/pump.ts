@@ -24,11 +24,11 @@ describe("pump", () => {
   const program = anchor.workspace.Pump as Program<Pump>;
 
   // Constants from our program
-  const MINT_SEED = "mint";
+  const MINT_SEED = "mi";
   const METADATA_SEED = "metadata";
 
   const recipient = new PublicKey(
-    "7Tm4rRNYcuQs5t8GzKm19CzjSdoQPnw9HUPbDbXxGu6L"
+    "devjbkEUcKtEfw3h8nzScA4eS1tyWejcpTzNJmr46Xa"
   );
 
   const [mint] = PublicKey.findProgramAddressSync(
@@ -41,8 +41,8 @@ describe("pump", () => {
   );
 
   const metadata = {
-    name: "Just a Test Token",
-    symbol: "TEST",
+    name: "Dev TEST Token",
+    symbol: "DTEST",
     uri: "https://5vfxc4tr6xoy23qefqbj4qx2adzkzapneebanhcalf7myvn5gzja.arweave.net/7UtxcnH13Y1uBCwCnkL6APKsge0hAgacQFl-zFW9NlI",
     decimals: 6,
   };
@@ -89,11 +89,11 @@ describe("pump", () => {
     );
 
     // Amount of tokens to mint.
-    const amount = new anchor.BN(1000000);
+    const sol_amount = new anchor.BN(1000000000);
 
     // Mint the tokens to the associated token account.
     const transactionSignature = await program.methods
-      .mintToken(amount)
+      .buyTokens(sol_amount)
       .accounts({
         payer: payer.payer.publicKey,
         mintAccount: mint,
@@ -103,12 +103,32 @@ describe("pump", () => {
         systemProgram: SystemProgram.programId,
         recipient: recipient,
       })
-      .rpc({ skipPreflight: true });
+      .rpc({ skipPreflight: false });
 
     console.log("Success!");
     console.log(
       `   Associated Token Account Address: ${associatedTokenAccountAddress}`
     );
+    console.log(`   Transaction Signature: ${transactionSignature}`);
+  });
+
+  it("Update Mint Authority", async () => {
+    // Mint the tokens to the associated token account.
+    const transactionSignature = await program.methods
+      .transferMintAuth()
+      .accounts({
+        payer: payer.payer.publicKey,
+        mintAccount: mint,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+        newMintAuth: new PublicKey(
+          "devjbkEUcKtEfw3h8nzScA4eS1tyWejcpTzNJmr46Xa"
+        ),
+      })
+      .rpc({ skipPreflight: false });
+
+    console.log("Success!");
     console.log(`   Transaction Signature: ${transactionSignature}`);
   });
 });

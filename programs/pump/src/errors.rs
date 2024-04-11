@@ -14,4 +14,7 @@ pub enum ProgramErrorCode {
     InvalidMintAccountSpace,
     #[msg("Cant initialize metadata_pointer")]
     CantInitializeMetadataPointer,
+
+    #[msg("Not Enough SOL sent")]
+    NotEnoughSOLSent,
 }
