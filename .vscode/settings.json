@@ -1,6 +1,7 @@
 {
   "rust-analyzer.linkedProjects": [
     "./programs/pump/Cargo.toml",
-    "./programs/pump/Cargo.toml"
+    "./programs/pump/Cargo.toml",
+    "./programs/pump_game/Cargo.toml"
   ]
 }

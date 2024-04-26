@@ -20,6 +20,10 @@ pub mod pump {
         buy::buy_tokens(ctx, sol_amount)
     }
 
+    pub fn sell_tokens(ctx: Context<SellTokens>, token_amount: u64) -> Result<()> {
+        sell::sell_tokens(ctx, token_amount)
+    }
+
     pub fn transfer_mint_auth(ctx:Context<TransferMintAuth>)-> Result<()> {
        transfer_mint_auth::transfer_mint_auth(ctx)
     }

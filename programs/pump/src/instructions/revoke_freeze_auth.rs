@@ -15,7 +15,7 @@ pub struct RevokeFreezeAuth<'info> {
     // Mint account address is a PDA
     #[account(
         mut,
-        seeds = [b"mi"],
+        seeds = [b"mm"],
         bump
     )]
     pub mint_account: Account<'info, Mint>,
@@ -28,7 +28,7 @@ pub struct RevokeFreezeAuth<'info> {
 pub fn revoke_freeze_auth(ctx: Context<RevokeFreezeAuth>) -> Result<()> {
 
     // PDA signer seeds
-    let seeds = b"mi";
+    let seeds = b"mm";
     let bump = ctx.bumps.mint_account;
     let signer_seeds: &[&[&[u8]]] = &[&[seeds, &[bump]]];
 

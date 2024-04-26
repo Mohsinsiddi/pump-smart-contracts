@@ -17,7 +17,7 @@ pub struct TransferMintAuth<'info> {
     // Mint account address is a PDA
     #[account(
         mut,
-        seeds = [b"mi"],
+        seeds = [b"mm"],
         bump
     )]
     pub mint_account: Account<'info, Mint>,
@@ -30,7 +30,7 @@ pub struct TransferMintAuth<'info> {
 pub fn transfer_mint_auth(ctx: Context<TransferMintAuth>) -> Result<()> {
 
     // PDA signer seeds
-    let seeds = b"mi";
+    let seeds = b"mm";
     let bump = ctx.bumps.mint_account;
     let signer_seeds: &[&[&[u8]]] = &[&[seeds, &[bump]]];
 

@@ -1474,6 +1474,21 @@ dependencies = [
  "anchor-lang",
  "anchor-spl",
  "mpl-token-metadata 4.1.2",
+ "pump_game",
+ "session-keys",
+ "solana-program",
+ "spl-token",
+ "spl-token-2022 2.0.1",
+ "spl-token-metadata-interface",
+]
+
+[[package]]
+name = "pump_game"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang",
+ "anchor-spl",
+ "mpl-token-metadata 4.1.2",
  "session-keys",
  "solana-program",
  "spl-token",

@@ -18,13 +18,11 @@ pub struct CreateToken<'info> {
     // Same PDA as address of the account and mint/freeze authority
     #[account(
         init,
-        seeds = [b"mi"],
+        seeds = [b"mm"],
         bump,
         payer = payer,
         mint::decimals = params.decimals,
         mint::authority = mint_account.key(),
-        mint::freeze_authority = mint_account.key(),
-
     )]
     pub mint_account: Account<'info, Mint>,
     
@@ -60,7 +58,7 @@ pub fn create_token(
         // PDA signer seeds
         // We use a PDA as a mint authority for the metadata account because 
     // we want to be able to update the NFT from the program.
-    let seeds = b"mi";
+    let seeds = b"mm";
     let bump = ctx.bumps.mint_account;
     let signer_seeds: &[&[&[u8]]] = &[&[seeds, &[bump]]];
     

@@ -1,10 +1,12 @@
 use {
-    crate::{constants::{INITIAL_PRICE, PRICE_SLOPE, SCALE}, errors::ProgramErrorCode}, anchor_lang::prelude::*, anchor_spl::{
+    crate::{calculate_tokens_bought, constants::{INITIAL_PRICE, PRICE_SLOPE, SCALE}, errors::ProgramErrorCode}, anchor_lang::prelude::*, anchor_spl::{
         associated_token::AssociatedToken,
         token::{mint_to, Mint, MintTo, Token, TokenAccount,},
-    }
+    }, pump_game::state::{admin_config::AdminConfig, game_data::GameData}, solana_program::system_instruction
 };
-use solana_program::system_instruction;
+use pump_game;
+use anchor_lang::solana_program::sysvar;
+
 
 
 #[derive(Accounts)]
@@ -19,10 +21,22 @@ pub struct BuyTokens<'info> {
     // Mint account address is a PDA
     #[account(
         mut,
-        seeds = [b"mi"],
+        seeds = [b"mm"],
         bump
     )]
     pub mint_account: Account<'info, Mint>,
+
+    pub pump_program: Program<'info, pump_game::program::PumpGame>,
+
+    #[account(mut)]
+    pub game_data: Account<'info, GameData>,
+
+    /// CHECK:checked in the constraint
+    pub admin_data: Account<'info, AdminConfig>,
+
+    #[account(address = sysvar::instructions::id())]
+    /// CHECK:checked in the constraint
+    instructions: AccountInfo<'info>,
 
     // Create Associated Token Account, if needed
     // This is the account that will hold the minted tokens
@@ -41,7 +55,7 @@ pub struct BuyTokens<'info> {
 
 pub fn buy_tokens(ctx: Context<BuyTokens>, sol_amount: u64) -> Result<()> {
 
-    let tokens_bought = calculate_tokens_bought(ctx.accounts.mint_account.supply , sol_amount);
+    let tokens_bought = calculate_tokens_bought(ctx.accounts.mint_account.supply as f64, sol_amount as f64, 6);
     msg!("Tokens bought with {} SOL: {}", sol_amount, tokens_bought);
    
     let from_account = &ctx.accounts.payer;
@@ -63,7 +77,7 @@ pub fn buy_tokens(ctx: Context<BuyTokens>, sol_amount: u64) -> Result<()> {
 
 
     // PDA signer seeds
-    let seeds = b"mi";
+    let seeds = b"mm";
     let bump = ctx.bumps.mint_account;
     let signer_seeds: &[&[&[u8]]] = &[&[seeds, &[bump]]];
 
@@ -78,33 +92,30 @@ pub fn buy_tokens(ctx: Context<BuyTokens>, sol_amount: u64) -> Result<()> {
             },
         )
         .with_signer(signer_seeds), // using PDA to sign
-        tokens_bought * 10u64.pow(ctx.accounts.mint_account.decimals as u32), // Mint tokens, adjust for decimals
+        tokens_bought , // Mint tokens, adjust for decimals
     )?;
 
-    msg!("Token minted successfully.");
+    msg!("Token Bought successfully.");
+
+    // let cpi_context = CpiContext::new(
+    //     ctx.accounts.pump_program.to_account_info(), 
+    //     pump_game::cpi::accounts::SetGameAccount{
+    //     payer:ctx.accounts.payer.to_account_info(),
+    //     game_data: ctx.accounts.game_data.to_account_info(),
+    //     instructions:ctx.accounts.instructions.to_account_info(),
+    //     admin_config_data:ctx.accounts.admin_data.to_account_info()
+    //     },
+    // );
+
+    // let chances :u8 = 25;
+
+    // pump_game::cpi::set_game_data(
+    //     cpi_context,
+    //     chances
+    // )?;
+    // msg!("cpi successful");
+
 
     Ok(())
 }
 
-// Function to calculate the price of tokens based on the current token supply
-fn calculate_token_price(current_supply: u64) -> u64 {
-    // Convert INITIAL_PRICE to u128 before multiplication to avoid overflow
-    let initial_price = INITIAL_PRICE as u128;
-    // Multiply by SCALE before division to maintain precision
-    let price_slope_scaled = (current_supply as u128 * PRICE_SLOPE as u128) / SCALE;
-    ((initial_price * SCALE as u128) + price_slope_scaled) as u64
-}
-
-// Function to calculate SOL needed to buy x amount of tokens
-fn calculate_sol_needed(current_supply: u64, desired_token_amount: u64) -> u64 {
-    let token_price = calculate_token_price(current_supply);
-    // Multiply by SCALE before division to maintain precision
-    (desired_token_amount as u128 * token_price as u128 / SCALE) as u64
-}
-
-// Function to calculate tokens bought with x amount of SOL
-fn calculate_tokens_bought(current_supply: u64, sol_sent: u64) -> u64 {
-    let token_price = calculate_token_price(current_supply);
-    // Multiply by SCALE before division to maintain precision
-    (sol_sent as u128 * SCALE / token_price as u128) as u64
-}

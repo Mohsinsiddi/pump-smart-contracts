@@ -1,12 +1,12 @@
 [package]
-name = "pump"
+name = "pump_game"
 version = "0.1.0"
 description = "Created with Anchor"
 edition = "2021"
 
 [lib]
 crate-type = ["cdylib", "lib"]
-name = "pump"
+name = "pump_game"
 
 [features]
 no-entrypoint = []
@@ -25,4 +25,3 @@ spl-token-2022 = { version="2.0.1", features = [ "no-entrypoint" ] }
 spl-token = { version = "4.0.1", features = [ "no-entrypoint" ] }
 spl-token-metadata-interface = { version = "0.2.1"}
 mpl-token-metadata = "4.1.2"
-pump_game = { path = "../pump_game", features = ["cpi"]}

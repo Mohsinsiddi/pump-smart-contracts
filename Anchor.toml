@@ -6,6 +6,7 @@ skip-lint = false
 
 [programs.devnet]
 pump= "DJMMfpsEPB6JSpzakCK9CqBtAjzRhFx7AYNUAqVktmUE"
+pump_game= "AGAtML592JZnHBjDDEZ97DGNy9jwETaPiAxtrBfcXFaX"
 
 [registry]
 url = "https://api.apr.dev"
