@@ -56,8 +56,8 @@ describe("Pump Game", () => {
       console.log("Success!");
       console.log(`   Transaction Signature: ${transactionSignature}`);
     }
-    const account = await program.account.adminConfig.fetch(admin_config_seed);
-    console.log(account);
+    // const account = await program.account.adminConfig.fetch(admin_config_seed);
+    // console.log(account);
   });
 
   it("Update an Admin Config Account", async () => {
@@ -77,8 +77,8 @@ describe("Pump Game", () => {
       console.log("Success!");
       console.log(`   Transaction Signature: ${transactionSignature}`);
     }
-    const account = await program.account.adminConfig.fetch(admin_config_seed);
-    console.log(account);
+    // const account = await program.account.adminConfig.fetch(admin_config_seed);
+    // console.log(account);
   });
 
   it("Create an Game Account", async () => {
@@ -96,11 +96,11 @@ describe("Pump Game", () => {
       console.log("Success!");
       console.log(`   Transaction Signature: ${transactionSignature}`);
     }
-    const account = await program.account.gameData.fetch(acc_seed);
-    console.log(account);
+    // const account = await program.account.gameData.fetch(acc_seed);
+    // console.log(account);
   });
   it("Fetch Game Account Data", async () => {
-    const account = await program.account.gameData.fetch(acc_seed);
-    console.log(account);
+    // const account = await program.account.gameData.fetch(acc_seed);
+    // console.log(account);
   });
 });

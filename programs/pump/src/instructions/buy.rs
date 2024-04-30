@@ -1,5 +1,5 @@
 use {
-    crate::{calculate_tokens_bought, constants::{INITIAL_PRICE, PRICE_SLOPE, SCALE}, errors::ProgramErrorCode}, anchor_lang::prelude::*, anchor_spl::{
+    crate::{calculate_sol_needed, calculate_tokens_bought, constants::{INITIAL_PRICE, PRICE_SLOPE, SCALE, TOKEN_MINT_SEED}, errors::ProgramErrorCode}, anchor_lang::{prelude::*, system_program::{transfer, Transfer}}, anchor_spl::{
         associated_token::AssociatedToken,
         token::{mint_to, Mint, MintTo, Token, TokenAccount,},
     }, pump_game::state::{admin_config::AdminConfig, game_data::GameData}, solana_program::system_instruction
@@ -10,33 +10,18 @@ use anchor_lang::solana_program::sysvar;
 
 
 #[derive(Accounts)]
+#[instruction(symbol:String)]
 pub struct BuyTokens<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    /// CHECK: Address receving the lamports
-    #[account(mut)]
-    pub recipient: AccountInfo<'info>,
-
     // Mint account address is a PDA
     #[account(
         mut,
-        seeds = [b"mm"],
+        seeds = [TOKEN_MINT_SEED,symbol.as_bytes().as_ref(),creator_address.key().as_ref()],
         bump
     )]
     pub mint_account: Account<'info, Mint>,
-
-    pub pump_program: Program<'info, pump_game::program::PumpGame>,
-
-    #[account(mut)]
-    pub game_data: Account<'info, GameData>,
-
-    /// CHECK:checked in the constraint
-    pub admin_data: Account<'info, AdminConfig>,
-
-    #[account(address = sysvar::instructions::id())]
-    /// CHECK:checked in the constraint
-    instructions: AccountInfo<'info>,
 
     // Create Associated Token Account, if needed
     // This is the account that will hold the minted tokens
@@ -48,38 +33,55 @@ pub struct BuyTokens<'info> {
     )]
     pub associated_token_account: Account<'info, TokenAccount>,
 
+
+    #[account(
+        mut,
+        seeds = [b"token_vault".as_ref(),mint_account.key().as_ref()],
+        bump
+    )]
+    pub pda: SystemAccount<'info>,
+
+    /// CHECK: Address receving the lamports
+    pub creator_address: AccountInfo<'info>,
+
     pub token_program: Program<'info, Token>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub system_program: Program<'info, System>,
 }
 
-pub fn buy_tokens(ctx: Context<BuyTokens>, sol_amount: u64) -> Result<()> {
+pub fn buy_tokens(ctx: Context<BuyTokens>, symbol:String,sol_amount: u64,) -> Result<()> {
 
-    let tokens_bought = calculate_tokens_bought(ctx.accounts.mint_account.supply as f64, sol_amount as f64, 6);
-    msg!("Tokens bought with {} SOL: {}", sol_amount, tokens_bought);
-   
-    let from_account = &ctx.accounts.payer;
-        let to_account = &ctx.accounts.recipient;
+    let prev_tokens_bought = calculate_tokens_bought(ctx.accounts.mint_account.supply as f64, sol_amount as f64, 6);
 
-    // Create the transfer instruction
-    let transfer_instruction = system_instruction::transfer(from_account.key, to_account.key, sol_amount);
-
-    // Invoke the transfer instruction
-    anchor_lang::solana_program::program::invoke_signed(
-        &transfer_instruction,
-        &[
-            from_account.to_account_info(),
-            to_account.clone(),
-            ctx.accounts.system_program.to_account_info(),
-        ],
-        &[],
+    let post_tokens_bought = calculate_tokens_bought(ctx.accounts.mint_account.supply as f64 + prev_tokens_bought as f64, sol_amount as f64, 6);
+    msg!("Tokens Amount: {} for {} lamports",post_tokens_bought,sol_amount);
+    let pda = &mut ctx.accounts.pda;
+    let signer = &mut ctx.accounts.payer;
+    let system_program = &ctx.accounts.system_program;
+    
+    let pda_balance_before = pda.get_lamports();
+    transfer(
+        CpiContext::new(
+            system_program.to_account_info(),
+            Transfer {
+                from: signer.to_account_info(),
+                to: pda.to_account_info(),
+            },
+        ),
+        sol_amount,
     )?;
 
+    let pda_balance_after = pda.get_lamports();
+
+    require_eq!(pda_balance_after, pda_balance_before + sol_amount);
+    msg!("SOL sent successfully to PDA: {}",pda.key());
+
+    let creator_key =&ctx.accounts.creator_address.key();
 
     // PDA signer seeds
-    let seeds = b"mm";
+    let seeds: &[u8; 3] = TOKEN_MINT_SEED;
     let bump = ctx.bumps.mint_account;
-    let signer_seeds: &[&[&[u8]]] = &[&[seeds, &[bump]]];
+    let signer_seeds: &[&[&[u8]]] = &[&[seeds,symbol.as_bytes().as_ref(),creator_key.as_ref(), &[bump]]];
 
     // Invoke the mint_to instruction on the token program
     mint_to(
@@ -92,29 +94,10 @@ pub fn buy_tokens(ctx: Context<BuyTokens>, sol_amount: u64) -> Result<()> {
             },
         )
         .with_signer(signer_seeds), // using PDA to sign
-        tokens_bought , // Mint tokens, adjust for decimals
+        post_tokens_bought , // Mint tokens, adjust for decimals
     )?;
 
     msg!("Token Bought successfully.");
-
-    // let cpi_context = CpiContext::new(
-    //     ctx.accounts.pump_program.to_account_info(), 
-    //     pump_game::cpi::accounts::SetGameAccount{
-    //     payer:ctx.accounts.payer.to_account_info(),
-    //     game_data: ctx.accounts.game_data.to_account_info(),
-    //     instructions:ctx.accounts.instructions.to_account_info(),
-    //     admin_config_data:ctx.accounts.admin_data.to_account_info()
-    //     },
-    // );
-
-    // let chances :u8 = 25;
-
-    // pump_game::cpi::set_game_data(
-    //     cpi_context,
-    //     chances
-    // )?;
-    // msg!("cpi successful");
-
 
     Ok(())
 }

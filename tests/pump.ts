@@ -19,6 +19,7 @@ import {
 import { PumpGame } from "../target/types/pump_game";
 
 describe("pump", () => {
+  const MINIMUM_SOL_TO_LEAVE_IN_IT = "0.00089088 SOL";
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
   const payer = provider.wallet as anchor.Wallet;
@@ -26,8 +27,15 @@ describe("pump", () => {
   const program = anchor.workspace.Pump as Program<Pump>;
   const gameProgram = anchor.workspace.PumpGame as Program<PumpGame>;
 
+  const metadata = {
+    name: "Dev TEST Token",
+    symbol: "DDTEST",
+    uri: "https://5vfxc4tr6xoy23qefqbj4qx2adzkzapneebanhcalf7myvn5gzja.arweave.net/7UtxcnH13Y1uBCwCnkL6APKsge0hAgacQFl-zFW9NlI",
+    decimals: 6,
+  };
+
   // Constants from our program
-  const MINT_SEED = "mm";
+  const MINT_SEED = "mmm";
   const METADATA_SEED = "metadata";
 
   const recipient = new PublicKey(
@@ -35,7 +43,18 @@ describe("pump", () => {
   );
 
   const [mint] = PublicKey.findProgramAddressSync(
-    [Buffer.from(MINT_SEED)],
+    [
+      Buffer.from(MINT_SEED),
+      Buffer.from(metadata.symbol),
+      payer.payer.publicKey.toBuffer(),
+    ],
+    program.programId
+  );
+  console.log("Mint", mint.toBase58());
+
+  const TOKEN_VAULT_SEED = "token_vault";
+  const [pda] = PublicKey.findProgramAddressSync(
+    [Buffer.from(TOKEN_VAULT_SEED), mint.toBuffer()],
     program.programId
   );
   const ADMIN_CONFIG_SEED = "admin_authority";
@@ -48,13 +67,6 @@ describe("pump", () => {
   const MPL_TOKEN_METADATA_PROGRAM_ID = new PublicKey(
     "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
   );
-
-  const metadata = {
-    name: "Dev TEST Token",
-    symbol: "DTEST",
-    uri: "https://5vfxc4tr6xoy23qefqbj4qx2adzkzapneebanhcalf7myvn5gzja.arweave.net/7UtxcnH13Y1uBCwCnkL6APKsge0hAgacQFl-zFW9NlI",
-    decimals: 6,
-  };
 
   const isMintAuthUpdated = true;
   const isFreeAuthRevoked = true;
@@ -80,6 +92,8 @@ describe("pump", () => {
         tokenMetadataProgram: MPL_TOKEN_METADATA_PROGRAM_ID,
         systemProgram: SystemProgram.programId,
         rent: SYSVAR_RENT_PUBKEY,
+        recipient: recipient,
+        pda: pda,
       };
 
       const transactionSignature = await program.methods
@@ -93,7 +107,7 @@ describe("pump", () => {
     }
   });
 
-  it("Mint some tokens to your wallet!", async () => {
+  it("Buy Tokens!", async () => {
     if (false) {
       // Derive the associated token address account for the mint and payer.
       const associatedTokenAccountAddress = getAssociatedTokenAddressSync(
@@ -102,7 +116,7 @@ describe("pump", () => {
       );
 
       // Amount of tokens to mint.
-      const sol_amount = new anchor.BN(10000000000);
+      const sol_amount = new anchor.BN(10000000);
 
       // Constants from our program
       const ACC_SEED = "game_account";
@@ -130,7 +144,7 @@ describe("pump", () => {
 
       // Mint the tokens to the associated token account.
       const transactionSignature = await program.methods
-        .buyTokens(sol_amount)
+        .buyTokens(metadata.symbol, sol_amount)
         .accounts({
           payer: payer.payer.publicKey,
           mintAccount: mint,
@@ -138,11 +152,8 @@ describe("pump", () => {
           tokenProgram: TOKEN_PROGRAM_ID,
           associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
           systemProgram: SystemProgram.programId,
-          recipient: recipient,
-          gameData: acc_seed,
-          pumpProgram: gameProgram.programId,
-          instructions: SYSVAR_INSTRUCTIONS_PUBKEY,
-          adminData: admin_config_seed,
+          pda: pda,
+          creatorAddress: payer.publicKey,
         })
         .rpc({ skipPreflight: true });
 
@@ -166,14 +177,17 @@ describe("pump", () => {
 
       console.log(associatedTokenAccountAddress.toBase58());
 
-      const token_amount = new anchor.BN(100000000);
+      const token_amount = new anchor.BN(9999996);
       const transactionSignature = await program.methods
-        .sellTokens(token_amount)
+        .sellTokens(metadata.symbol, token_amount)
         .accounts({
           signer: payer.payer.publicKey,
           tokenProgram: TOKEN_PROGRAM_ID,
           mintAccount: mint,
           from: associatedTokenAccountAddress,
+          pda: pda,
+          systemProgram: SystemProgram.programId,
+          creatorAddress: payer.publicKey,
         })
         .signers([])
         .rpc({ skipPreflight: true });

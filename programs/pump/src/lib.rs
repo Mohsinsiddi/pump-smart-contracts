@@ -16,12 +16,12 @@ pub mod pump {
         create::create_token(ctx,metadata)
     }
 
-    pub fn buy_tokens(ctx: Context<BuyTokens>, sol_amount: u64) -> Result<()> {
-        buy::buy_tokens(ctx, sol_amount)
+    pub fn buy_tokens(ctx: Context<BuyTokens>, symbol:String,sol_amount: u64) -> Result<()> {
+        buy::buy_tokens(ctx,symbol, sol_amount)
     }
 
-    pub fn sell_tokens(ctx: Context<SellTokens>, token_amount: u64) -> Result<()> {
-        sell::sell_tokens(ctx, token_amount)
+    pub fn sell_tokens(ctx: Context<SellTokens>, symbol:String,token_amount: u64) -> Result<()> {
+        sell::sell_tokens(ctx,symbol,token_amount)
     }
 
     pub fn transfer_mint_auth(ctx:Context<TransferMintAuth>)-> Result<()> {

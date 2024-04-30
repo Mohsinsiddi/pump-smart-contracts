@@ -9,7 +9,9 @@ pub const PRICE_SLOPE: f64 = 33_000_000_000.0; // Price increase per token sold 
 pub const DECIMAL: f64 = 1_000.0; // Decimal precision
 pub const SCALE: f64 = 1_000_000_000.0; // Scale for division and multiplication
 
+pub const TOKEN_CREATE_FEE:u64 = 50000000;
 
 
-
-pub const TOKEN_CREATOR: anchor_lang::prelude::Pubkey = pubkey!("devjbkEUcKtEfw3h8nzScA4eS1tyWejcpTzNJmr46Xa");
+pub const FEE_RECEIPIENT: anchor_lang::prelude::Pubkey = pubkey!("devjbkEUcKtEfw3h8nzScA4eS1tyWejcpTzNJmr46Xa");
+pub const TOKEN_MINT_SEED: &[u8; 3] = b"mmm";
+pub const MIN_RENT_FOR_TOKEN_PDA:u64= 890880;

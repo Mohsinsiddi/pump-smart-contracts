@@ -1,5 +1,5 @@
 use {
-    crate::constants::TOKEN_CREATOR, anchor_lang::prelude::*, anchor_spl::{
+    crate::constants::*, anchor_lang::prelude::*, anchor_spl::{
         associated_token::AssociatedToken,
         token::{set_authority, Mint, SetAuthority, Token},
     }, spl_token::instruction::AuthorityType
@@ -9,13 +9,13 @@ use {
 
 #[derive(Accounts)]
 pub struct RevokeFreezeAuth<'info> {
-    #[account(mut,address=TOKEN_CREATOR)]
+    #[account(mut)]
     pub payer: Signer<'info>,
 
     // Mint account address is a PDA
     #[account(
         mut,
-        seeds = [b"mm"],
+        seeds = [TOKEN_MINT_SEED],
         bump
     )]
     pub mint_account: Account<'info, Mint>,
@@ -28,7 +28,7 @@ pub struct RevokeFreezeAuth<'info> {
 pub fn revoke_freeze_auth(ctx: Context<RevokeFreezeAuth>) -> Result<()> {
 
     // PDA signer seeds
-    let seeds = b"mm";
+    let seeds = TOKEN_MINT_SEED;
     let bump = ctx.bumps.mint_account;
     let signer_seeds: &[&[&[u8]]] = &[&[seeds, &[bump]]];
 
